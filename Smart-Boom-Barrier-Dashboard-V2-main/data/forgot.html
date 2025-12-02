@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forgot Password</title>
+  <link rel="stylesheet" href="main.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h2>Reset Password</h2>
+
+      <label for="username">Username</label>
+      <input id="username" autocomplete="username">
+
+      <label for="newpass">New Password</label>
+      <input id="newpass" type="password" autocomplete="new-password">
+
+      <div class="auth-actions">
+        <button id="reset" class="btn primary">Reset Password</button>
+        <a href="login.html">Back to login</a>
+      </div>
+
+      <div id="msg" class="msg" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    const resetBtn = document.getElementById("reset");
+    const userEl = document.getElementById("username");
+    const passEl = document.getElementById("newpass");
+    const msg = document.getElementById("msg");
+
+    function showMsg(t, err=true){
+      msg.textContent = t;
+      msg.style.color = err ? "var(--danger)" : "var(--accent)";
+    }
+
+    function doReset(){
+      const u = userEl.value.trim();
+      const np = passEl.value;
+
+      if (!u || !np) return showMsg("Enter username and new password");
+
+      const res = auth.resetPassword(u, np);
+      if (!res.ok) return showMsg("User does not exist");
+
+      showMsg("Password reset successful!", false);
+
+      setTimeout(()=> location.href="login.html", 700);
+    }
+
+    resetBtn.addEventListener("click", doReset);
+  </script>
+</body>
+</html>

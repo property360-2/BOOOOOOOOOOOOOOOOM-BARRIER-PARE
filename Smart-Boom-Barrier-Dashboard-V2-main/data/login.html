@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - ESP32 RFID Access System</title>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="modern-theme.css" />
+    <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: var(--space-lg);
+      }
+
+      .login-container {
+        width: 100%;
+        max-width: 450px;
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      .login-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-xl);
+        padding: var(--space-2xl);
+        box-shadow: var(--shadow-xl);
+      }
+
+      .login-header {
+        text-align: center;
+        margin-bottom: var(--space-xl);
+      }
+
+      .login-logo {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto var(--space-lg);
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        box-shadow: var(--shadow-glow);
+        animation: pulse 3s ease-in-out infinite;
+      }
+
+      .login-title {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: var(--space-sm);
+        background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .login-subtitle {
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .login-form {
+        margin-top: var(--space-xl);
+      }
+
+      .alert {
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-lg);
+        font-size: 14px;
+        display: none;
+        animation: slideInRight 0.3s ease-out;
+      }
+
+      .alert.show {
+        display: block;
+      }
+
+      .alert-success {
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--success-light);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .alert-error {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+
+      .alert-info {
+        background: rgba(59, 130, 246, 0.2);
+        color: var(--primary-light);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+
+      .login-footer {
+        margin-top: var(--space-xl);
+        padding-top: var(--space-lg);
+        border-top: 1px solid var(--glass-border);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .login-footer a {
+        color: var(--accent);
+        text-decoration: none;
+        transition: color var(--transition-base);
+      }
+
+      .login-footer a:hover {
+        color: var(--accent-light);
+      }
+
+      .form-input-group {
+        position: relative;
+      }
+
+      .form-input-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 18px;
+        opacity: 0.6;
+      }
+
+      .form-input-group .form-input {
+        padding-left: 48px;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 18px;
+        padding: 0;
+        transition: color var(--transition-base);
+      }
+
+      .password-toggle:hover {
+        color: var(--text-primary);
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          box-shadow: var(--shadow-glow);
+        }
+        50% {
+          box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="login-logo"><span class="material-icons" style="font-size: 40px;">directions_car</span></div>
+          <h1 class="login-title">Welcome Back</h1>
+          <p class="login-subtitle">Sign in to access the RFID Access System</p>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+
+        <form class="login-form" id="loginForm">
+          <div class="form-group">
+            <label class="form-label" for="username">Username</label>
+            <div class="form-input-group">
+              <span class="form-input-icon"><span class="material-icons" style="font-size: 18px;">person</span></span>
+              <input
+                id="username"
+                class="form-input"
+                type="text"
+                autocomplete="username"
+                placeholder="Enter your username"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <div class="form-input-group">
+              <span class="form-input-icon"><span class="material-icons" style="font-size: 18px;">lock</span></span>
+              <input
+                id="password"
+                class="form-input"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+                required
+              />
+              <button type="button" class="password-toggle" id="togglePassword">
+                <span class="material-icons" style="font-size: 18px;">visibility</span>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="loginBtn" style="width: 100%; margin-top: var(--space-lg);">
+            <span class="material-icons">login</span>
+            <span>Sign In</span>
+          </button>
+        </form>
+
+        <div class="login-footer">
+          <p>Default credentials: <strong>admin</strong> / <strong>admin</strong></p>
+          <p style="margin-top: var(--space-sm); font-size: 12px;">
+            <a href="index.html">← Back to Dashboard</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+      // Elements
+      const loginForm = document.getElementById('loginForm');
+      const loginBtn = document.getElementById('loginBtn');
+      const usernameEl = document.getElementById('username');
+      const passwordEl = document.getElementById('password');
+      const alertBox = document.getElementById('alertBox');
+      const togglePassword = document.getElementById('togglePassword');
+
+      // Redirect if already logged in
+      const current = auth.getCurrentUser();
+      if (current) {
+        location.href = 'index.html';
+      }
+
+      // Show alert message
+      function showAlert(text, type = 'error') {
+        alertBox.textContent = text;
+        alertBox.className = `alert alert-${type} show`;
+        setTimeout(() => {
+          alertBox.classList.remove('show');
+        }, 5000);
+      }
+
+      // Toggle password visibility
+      togglePassword.addEventListener('click', () => {
+        const type = passwordEl.type === 'password' ? 'text' : 'password';
+        passwordEl.type = type;
+        togglePassword.querySelector('.material-icons').textContent = type === 'password' ? 'visibility' : 'visibility_off';
+      });
+
+      // Handle login
+      async function doLogin(e) {
+        e.preventDefault();
+
+        const u = usernameEl.value.trim();
+        const p = passwordEl.value;
+
+        if (!u || !p) {
+          showAlert('Please enter both username and password', 'error');
+          return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="material-icons animate-spin">hourglass_empty</span><span>Signing in...</span>';
+        showAlert('Authenticating...', 'info');
+
+        // Simulated fast check
+        setTimeout(() => {
+          const res = auth.login(u, p);
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = '<span class="material-icons">login</span><span>Sign In</span>';
+
+          if (!res.ok) {
+            showAlert('Invalid username or password. Please try again.', 'error');
+            passwordEl.value = '';
+            passwordEl.focus();
+            return;
+          }
+
+          showAlert('Login successful! Redirecting...', 'success');
+
+          // Redirect to saved return path if available
+          setTimeout(() => {
+            const rtn = localStorage.getItem('rfid_return_to');
+            if (rtn) {
+              localStorage.removeItem('rfid_return_to');
+              location.href = rtn;
+            } else {
+              location.href = 'index.html';
+            }
+          }, 500);
+        }, 250);
+      }
+
+      // Event listeners
+      loginForm.addEventListener('submit', doLogin);
+
+      // Allow Enter key navigation
+      usernameEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          passwordEl.focus();
+        }
+      });
+
+      // Focus username on load
+      usernameEl.focus();
+    </script>
+  </body>
+</html>

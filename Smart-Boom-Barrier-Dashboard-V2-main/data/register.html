@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Register - Boom Barrier RFID</title>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+
+  <body>
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <h2>Create User Account</h2>
+
+        <label for="username">Username</label>
+        <input id="username" autocomplete="username" />
+
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="new-password" />
+
+        <!-- ROLE REMOVED, always user -->
+        <input type="hidden" id="role" value="user" />
+
+        <div class="auth-actions">
+          <button id="register" class="btn primary">Create account</button>
+          <a href="login.html">Back to login</a>
+        </div>
+
+        <div id="msg" class="msg" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+      const registerBtn = document.getElementById('register');
+      const usernameEl = document.getElementById('username');
+      const passwordEl = document.getElementById('password');
+      const msg = document.getElementById('msg');
+
+      // If logged in already, redirect
+      const current = auth.getCurrentUser();
+      if (current) location.href = 'index.html';
+
+      function showMsg(text, error = true) {
+        msg.textContent = text;
+        msg.style.color = error ? 'var(--danger)' : 'var(--accent)';
+      }
+
+      function doRegister() {
+        const u = usernameEl.value.trim();
+        const p = passwordEl.value;
+        const role = "user"; // FIXED, cannot be admin
+
+        if (!u || !p) return showMsg('Enter username and password');
+
+        const res = auth.register(u, p, role);
+
+        if (!res.ok) return showMsg('Username already exists');
+
+        auth.login(u, p);
+        showMsg('Account created!', false);
+
+        setTimeout(() => location.href = 'index.html', 400);
+      }
+
+      registerBtn.addEventListener('click', doRegister);
+      passwordEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doRegister();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vehicles Inside - ESP32 RFID Access System</title>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="modern-theme.css" />
+    <style>
+      body {
+        min-height: 100vh;
+      }
+
+      .page-header {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
+        border-bottom: 1px solid var(--glass-border);
+        padding: var(--space-xl) 0;
+        margin-bottom: var(--space-xl);
+      }
+
+      .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 var(--space-xl);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-lg);
+      }
+
+      .header-title-section {
+        flex: 1;
+      }
+
+      .header-title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: var(--space-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        flex-wrap: wrap;
+      }
+
+      .header-subtitle {
+        color: var(--text-muted);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        flex-wrap: wrap;
+      }
+
+      .count-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: var(--radius-full);
+        font-size: 18px;
+        font-weight: 700;
+        color: white;
+        box-shadow: var(--shadow-md);
+      }
+
+      .refresh-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: 6px 12px;
+        background: var(--glass);
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        color: var(--text-muted);
+        border: 1px solid var(--glass-border);
+      }
+
+      .vehicles-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: var(--space-lg);
+      }
+
+      .vehicle-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-base);
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      .vehicle-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary);
+      }
+
+      .vehicle-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-lg);
+        padding-bottom: var(--space-md);
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      .vehicle-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .vehicle-plate {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        font-size: 14px;
+        font-weight: 600;
+        padding: 6px 12px;
+        background: rgba(59, 130, 246, 0.2);
+        border-radius: var(--radius-md);
+        color: var(--primary-light);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+
+      .vehicle-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+      }
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+      }
+
+      .info-label {
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+
+      .info-value {
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .duration {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        padding: 4px 10px;
+        background: rgba(16, 185, 129, 0.2);
+        border-radius: var(--radius-full);
+        color: var(--success-light);
+        font-weight: 600;
+        font-size: 13px;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: var(--space-2xl) var(--space-lg);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        margin: var(--space-2xl) auto;
+        max-width: 500px;
+      }
+
+      .empty-icon {
+        font-size: 64px;
+        margin-bottom: var(--space-lg);
+        opacity: 0.5;
+      }
+
+      .empty-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: var(--space-sm);
+        color: var(--text-secondary);
+      }
+
+      .empty-description {
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .refresh-pulse {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--success);
+        border-radius: 50%;
+        animation: pulse 2s ease-in-out infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <div id="modernNav"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-title-section">
+          <h1 class="header-title">
+            <span><span class="material-icons" style="vertical-align: middle;">directions_car</span> Vehicles Inside Premises</span>
+            <span class="count-badge" id="vehicleCount">0</span>
+          </h1>
+          <p class="header-subtitle">
+            <span>Real-time display of all vehicles currently inside</span>
+            <span class="refresh-indicator">
+              <span class="refresh-pulse"></span>
+              <span id="refreshIndicator">Auto-refresh: 5s</span>
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div id="vehiclesContainer" class="vehicles-grid"></div>
+      <div id="emptyState" class="empty-state" style="display:none">
+        <div class="empty-icon"><span class="material-icons" style="font-size: 64px;">auto_awesome</span></div>
+        <h2 class="empty-title">No Vehicles Inside</h2>
+        <p class="empty-description">All vehicles have checked out. New vehicles will appear here automatically when they check in.</p>
+      </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="backend.js"></script>
+    <script src="navigation.js"></script>
+    <script>
+      // Auth guard
+      (function(){
+        try {
+          const user = auth.getCurrentUser();
+          if (!user) {
+            localStorage.setItem('rfid_return_to', location.pathname);
+            location.href = 'login.html';
+          }
+        } catch(e) {
+          location.href = 'login.html';
+        }
+      })();
+
+      const vehiclesContainer = document.getElementById('vehiclesContainer');
+      const emptyState = document.getElementById('emptyState');
+      const vehicleCount = document.getElementById('vehicleCount');
+      const refreshIndicator = document.getElementById('refreshIndicator');
+
+      let refreshInterval = 5000; // 5 seconds
+
+      async function loadVehicles() {
+        try {
+          const res = await fetch('/api.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({ action: 'get_vehicles_inside' })
+          });
+
+          const data = await res.json();
+
+          if (data.ok) {
+            renderVehicles(data.vehicles || []);
+          } else {
+            console.error('Failed to load vehicles:', data.err);
+            showError('Failed to load vehicles. Please refresh the page.');
+          }
+        } catch (e) {
+          console.error('Network error:', e);
+          showError('Network error. Check your connection.');
+        }
+      }
+
+      function renderVehicles(vehicles) {
+        vehicleCount.textContent = vehicles.length;
+
+        if (vehicles.length === 0) {
+          vehiclesContainer.innerHTML = '';
+          vehiclesContainer.style.display = 'none';
+          emptyState.style.display = 'block';
+          return;
+        }
+
+        vehiclesContainer.style.display = 'grid';
+        emptyState.style.display = 'none';
+
+        vehiclesContainer.innerHTML = vehicles.map(v => `
+          <div class="vehicle-card">
+            <div class="vehicle-header">
+              <div class="vehicle-name">${escapeHtml(v.name)}</div>
+              <div class="vehicle-plate">
+                <span class="material-icons" style="font-size: 14px;">directions_car</span>
+                <span>${escapeHtml(v.vehicle_plate)}</span>
+              </div>
+            </div>
+            <div class="vehicle-info">
+              <div class="info-row">
+                <span class="info-label">Card UID</span>
+                <span class="info-value">${escapeHtml(v.uid)}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Department</span>
+                <span class="info-value">${escapeHtml(v.department || 'N/A')}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Check-in Time</span>
+                <span class="info-value">${formatDateTime(v.check_in_time)}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Duration</span>
+                <span class="duration">
+                  <span class="material-icons" style="font-size: 13px;">schedule</span>
+                  <span>${escapeHtml(v.duration)}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function escapeHtml(text) {
+        if (!text) return 'N/A';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function formatDateTime(timestamp) {
+        try {
+          const date = new Date(timestamp);
+          return date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        } catch (e) {
+          return timestamp || 'N/A';
+        }
+      }
+
+      function showError(message) {
+        // Could implement a toast notification here
+        console.error(message);
+      }
+
+      // Auto-refresh countdown
+      let countdown = refreshInterval / 1000;
+      setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+          loadVehicles();
+          countdown = refreshInterval / 1000;
+        }
+        refreshIndicator.textContent = `Auto-refresh: ${countdown}s`;
+      }, 1000);
+
+      // Initial load
+      loadVehicles();
+    </script>
+  </body>
+</html>

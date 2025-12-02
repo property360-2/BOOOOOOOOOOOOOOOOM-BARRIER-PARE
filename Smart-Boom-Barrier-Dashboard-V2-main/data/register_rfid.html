@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Register RFID Card - ESP32 RFID Access System</title>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="modern-theme.css" />
+    <style>
+      body {
+        min-height: 100vh;
+      }
+
+      .page-header {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
+        border-bottom: 1px solid var(--glass-border);
+        padding: var(--space-xl) 0;
+        margin-bottom: var(--space-xl);
+      }
+
+      .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 var(--space-xl);
+      }
+
+      .header-title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: var(--space-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+      }
+
+      .header-subtitle {
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .registration-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-xl);
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 var(--space-xl);
+      }
+
+      .form-section {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+        box-shadow: var(--shadow-md);
+      }
+
+      .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: var(--space-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding-bottom: var(--space-md);
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-md);
+      }
+
+      .form-helper {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+
+      .scan-status {
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        margin-top: var(--space-lg);
+        text-align: center;
+        font-size: 14px;
+        font-weight: 500;
+        display: none;
+        animation: slideInRight 0.3s ease-out;
+      }
+
+      .scan-status.show { display: block; }
+
+      .scan-status.waiting {
+        background: rgba(59, 130, 246, 0.2);
+        color: var(--primary-light);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+
+      .scan-status.success {
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--success-light);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .scan-status.error {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+
+      .preview-section {
+        position: sticky;
+        top: 90px;
+        height: fit-content;
+      }
+
+      .preview-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
+        backdrop-filter: blur(20px);
+        border: 2px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+        box-shadow: var(--shadow-lg);
+        transition: all var(--transition-base);
+      }
+
+      .preview-card.active {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-xl), var(--shadow-glow);
+      }
+
+      .preview-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: 8px 16px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 700;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--space-lg);
+      }
+
+      .preview-uid {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--space-lg);
+        padding: var(--space-md);
+        background: var(--glass);
+        border-radius: var(--radius-md);
+        text-align: center;
+        font-family: var(--font-mono);
+        border: 1px solid var(--glass-border);
+      }
+
+      .preview-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+      }
+
+      .preview-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        padding: var(--space-md);
+        background: var(--glass);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--glass-border);
+      }
+
+      .preview-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: var(--radius-md);
+        font-size: 20px;
+      }
+
+      .preview-content {
+        flex: 1;
+      }
+
+      .preview-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+
+      .preview-value {
+        font-size: 14px;
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+
+      .preview-placeholder {
+        color: var(--text-muted);
+        font-style: italic;
+      }
+
+      .button-group {
+        display: flex;
+        gap: var(--space-md);
+        margin-top: var(--space-xl);
+      }
+
+      @media (max-width: 968px) {
+        .registration-container {
+          grid-template-columns: 1fr;
+        }
+
+        .preview-section {
+          position: relative;
+          top: 0;
+        }
+
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <div id="modernNav"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="header-title">
+          <span><span class="material-icons" style="vertical-align: middle;">add_circle</span> Register RFID Card</span>
+        </h1>
+        <p class="header-subtitle">Add a new authorized RFID card holder to the system</p>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="registration-container">
+      <!-- Form Section -->
+      <div class="form-section">
+        <h2 class="section-title">
+          <span class="material-icons">edit_note</span>
+          <span>Customer Information</span>
+        </h2>
+
+        <form id="registrationForm">
+          <!-- Card UID -->
+          <div class="form-group">
+            <label class="form-label" for="cardUID">Card UID *</label>
+            <input
+              type="text"
+              id="cardUID"
+              name="cardUID"
+              class="form-input"
+              placeholder="e.g., TAG-ABC123"
+              required
+              readonly
+            />
+            <div class="form-helper">📡 Scan a card or wait for live detection</div>
+          </div>
+
+          <!-- Cardholder Name -->
+          <div class="form-group">
+            <label class="form-label" for="cardHolderName">Card Holder Name *</label>
+            <input
+              type="text"
+              id="cardHolderName"
+              name="cardHolderName"
+              class="form-input"
+              placeholder="e.g., John Doe"
+              required
+            />
+          </div>
+
+          <!-- Email and Phone -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="cardHolderEmail">Email</label>
+              <input
+                type="email"
+                id="cardHolderEmail"
+                name="cardHolderEmail"
+                class="form-input"
+                placeholder="john@example.com"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="cardHolderPhone">Phone</label>
+              <input
+                type="tel"
+                id="cardHolderPhone"
+                name="cardHolderPhone"
+                class="form-input"
+                placeholder="+1234567890"
+              />
+            </div>
+          </div>
+
+          <!-- Vehicle Plate and Department -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="vehiclePlate">Vehicle Plate Number</label>
+              <input
+                type="text"
+                id="vehiclePlate"
+                name="vehiclePlate"
+                class="form-input"
+                placeholder="e.g., ABC-1234"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="department">Department</label>
+              <input
+                type="text"
+                id="department"
+                name="department"
+                class="form-input"
+                placeholder="e.g., IT, HR"
+              />
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label class="form-label" for="notes">Notes</label>
+            <textarea
+              id="notes"
+              name="notes"
+              class="form-input"
+              placeholder="Additional notes about this card..."
+              rows="3"
+            ></textarea>
+          </div>
+
+          <!-- Status Message -->
+          <div class="scan-status" id="scanStatus"></div>
+
+          <!-- Buttons -->
+          <div class="button-group">
+            <button type="submit" class="btn btn-primary" id="submitBtn" style="flex: 1;">
+              <span class="material-icons">check_circle</span>
+              <span>Register Card</span>
+            </button>
+            <button type="button" class="btn btn-ghost" id="clearBtn">
+              <span class="material-icons">refresh</span>
+              <span>Clear</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="preview-section">
+        <div class="preview-card" id="cardPreview">
+          <div class="preview-badge">
+            <span class="material-icons" style="font-size: inherit;">confirmation_number</span>
+            <span>Live Preview</span>
+          </div>
+
+          <div class="preview-uid" id="previewUID">
+            <span class="preview-placeholder">Waiting for card...</span>
+          </div>
+
+          <div class="preview-info">
+            <div class="preview-row">
+              <div class="preview-icon"><span class="material-icons">person</span></div>
+              <div class="preview-content">
+                <div class="preview-label">Name</div>
+                <div class="preview-value" id="previewName">
+                  <span class="preview-placeholder">Not entered</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-row">
+              <div class="preview-icon"><span class="material-icons">directions_car</span></div>
+              <div class="preview-content">
+                <div class="preview-label">Vehicle Plate</div>
+                <div class="preview-value" id="previewPlate">
+                  <span class="preview-placeholder">Not entered</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-row">
+              <div class="preview-icon"><span class="material-icons">business</span></div>
+              <div class="preview-content">
+                <div class="preview-label">Department</div>
+                <div class="preview-value" id="previewDept">
+                  <span class="preview-placeholder">Not entered</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-row">
+              <div class="preview-icon"><span class="material-icons">email</span></div>
+              <div class="preview-content">
+                <div class="preview-label">Email</div>
+                <div class="preview-value" id="previewEmail">
+                  <span class="preview-placeholder">Not entered</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-row">
+              <div class="preview-icon"><span class="material-icons">phone</span></div>
+              <div class="preview-content">
+                <div class="preview-label">Phone</div>
+                <div class="preview-value" id="previewPhone">
+                  <span class="preview-placeholder">Not entered</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="backend.js"></script>
+    <script src="navigation.js"></script>
+    <script>
+      // Auth guard
+      (function(){
+        try {
+          const user = auth.getCurrentUser();
+          if (!user || user.role !== 'admin') {
+            alert('Admin access required');
+            localStorage.setItem('rfid_return_to', location.pathname);
+            location.href = 'login.html';
+          }
+        } catch(e) {
+          location.href = 'login.html';
+        }
+      })();
+
+      // Elements
+      const form = document.getElementById('registrationForm');
+      const cardUIDInput = document.getElementById('cardUID');
+      const cardHolderNameInput = document.getElementById('cardHolderName');
+      const cardHolderEmailInput = document.getElementById('cardHolderEmail');
+      const cardHolderPhoneInput = document.getElementById('cardHolderPhone');
+      const vehiclePlateInput = document.getElementById('vehiclePlate');
+      const departmentInput = document.getElementById('department');
+      const notesInput = document.getElementById('notes');
+      const submitBtn = document.getElementById('submitBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const scanStatus = document.getElementById('scanStatus');
+      const cardPreview = document.getElementById('cardPreview');
+
+      // Update preview
+      function updatePreview() {
+        const uid = cardUIDInput.value.trim();
+        const name = cardHolderNameInput.value.trim();
+        const email = cardHolderEmailInput.value.trim();
+        const phone = cardHolderPhoneInput.value.trim();
+        const plate = vehiclePlateInput.value.trim();
+        const dept = departmentInput.value.trim();
+
+        // Update UID
+        const previewUID = document.getElementById('previewUID');
+        if (uid) {
+          previewUID.innerHTML = uid;
+          cardPreview.classList.add('active');
+        } else {
+          previewUID.innerHTML = '<span class="preview-placeholder">Waiting for card...</span>';
+          cardPreview.classList.remove('active');
+        }
+
+        // Update other fields
+        document.getElementById('previewName').innerHTML = name || '<span class="preview-placeholder">Not entered</span>';
+        document.getElementById('previewEmail').innerHTML = email || '<span class="preview-placeholder">Not entered</span>';
+        document.getElementById('previewPhone').innerHTML = phone || '<span class="preview-placeholder">Not entered</span>';
+        document.getElementById('previewPlate').innerHTML = plate || '<span class="preview-placeholder">Not entered</span>';
+        document.getElementById('previewDept').innerHTML = dept || '<span class="preview-placeholder">Not entered</span>';
+      }
+
+      // Listen to input changes
+      [cardUIDInput, cardHolderNameInput, cardHolderEmailInput, cardHolderPhoneInput, vehiclePlateInput, departmentInput].forEach(el => {
+        el.addEventListener('input', updatePreview);
+      });
+
+      // Clear form
+      clearBtn.addEventListener('click', () => {
+        form.reset();
+        setScanStatus('', '');
+        updatePreview();
+      });
+
+      // Submit registration
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const uid = cardUIDInput.value.trim();
+        const name = cardHolderNameInput.value.trim();
+        const email = cardHolderEmailInput.value.trim();
+        const phone = cardHolderPhoneInput.value.trim();
+        const plate = vehiclePlateInput.value.trim();
+        const dept = departmentInput.value.trim();
+        const notes = notesInput.value.trim();
+
+        if (!uid || !name) {
+          setScanStatus('Please fill in Card UID and Holder Name', 'error');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        setScanStatus('Registering card...', 'waiting');
+
+        try {
+          const res = await fetch('/api.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+              action: 'register_rfid',
+              card_uid: uid,
+              card_holder_name: name,
+              card_holder_email: email,
+              card_holder_phone: phone,
+              vehicle_plate: plate,
+              department: dept,
+              notes: notes
+            })
+          });
+          const data = await res.json();
+
+          if (data.ok) {
+            setScanStatus(`<span class="material-icons" style="font-size: 16px; vertical-align: middle;">check_circle</span> Card registered successfully: ${uid}`, 'success');
+
+            // Try to send to ESP32 device
+            try {
+              const ws = new WebSocket('ws://192.168.4.1/ws');
+              ws.onopen = () => {
+                ws.send('register:' + uid);
+                setTimeout(() => ws.close(), 500);
+              };
+            } catch(e) {
+              console.log('Could not reach ESP32 WS');
+            }
+
+            // Clear form after delay
+            setTimeout(() => {
+              form.reset();
+              updatePreview();
+              setScanStatus('', '');
+            }, 2000);
+          } else {
+            setScanStatus(`❌ Error: ${data.err || 'Registration failed'}`, 'error');
+          }
+        } catch(e) {
+          setScanStatus('❌ Network error: ' + e.message, 'error');
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+
+      function setScanStatus(msg, cls) {
+        scanStatus.textContent = msg;
+        scanStatus.className = 'scan-status ' + (cls ? cls + ' show' : '');
+      }
+
+      // WebSocket listener for live RFID from ESP32
+      (function() {
+        const DEFAULT_WS = 'ws://192.168.4.1/ws';
+        let socket = null;
+        let reconnectMs = 3000;
+
+        function startWS() {
+          try {
+            socket = new WebSocket(DEFAULT_WS);
+          } catch(e) {
+            console.warn('WS create failed', e);
+            return setTimeout(startWS, reconnectMs);
+          }
+
+          socket.onopen = () => {
+            console.log('WebSocket connected for live RFID');
+            setScanStatus('🟢 Connected to RFID reader', 'success');
+            setTimeout(() => setScanStatus('', ''), 2000);
+          };
+
+          socket.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              const tag = data.rfid || data.tag || data.uid;
+              if (tag) {
+                cardUIDInput.value = tag;
+                updatePreview();
+                setScanStatus(`<span class="material-icons" style="font-size: 16px; vertical-align: middle;">check_circle</span> Card detected: ${tag}`, 'success');
+                // Focus name input for quick entry
+                cardHolderNameInput.focus();
+              }
+            } catch(e) {
+              console.log('WS parse error', event.data);
+            }
+          };
+
+          socket.onclose = () => {
+            console.log('WebSocket closed, reconnecting...');
+            setTimeout(startWS, reconnectMs);
+          };
+
+          socket.onerror = (e) => {
+            console.warn('WebSocket error', e);
+          };
+        }
+
+        startWS();
+      })();
+
+      // Initial preview
+      updatePreview();
+    </script>
+  </body>
+</html>

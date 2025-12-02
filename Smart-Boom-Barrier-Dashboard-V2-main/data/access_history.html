@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Access History - ESP32 RFID Access System</title>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="modern-theme.css" />
+    <style>
+      body {
+        min-height: 100vh;
+      }
+
+      .page-header {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
+        border-bottom: 1px solid var(--glass-border);
+        padding: var(--space-xl) 0;
+        margin-bottom: var(--space-xl);
+      }
+
+      .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 var(--space-xl);
+      }
+
+      .header-title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: var(--space-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        flex-wrap: wrap;
+      }
+
+      .header-subtitle {
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-lg);
+        margin-bottom: var(--space-xl);
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-base);
+      }
+
+      .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary);
+      }
+
+      .stat-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        margin-bottom: var(--space-md);
+      }
+
+      .stat-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: var(--radius-md);
+        font-size: 24px;
+        box-shadow: var(--shadow-md);
+      }
+
+      .stat-info {
+        flex: 1;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+
+      .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-top: 4px;
+      }
+
+      .filters-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--space-xl);
+      }
+
+      .filters-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: var(--space-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+      }
+
+      .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-md);
+      }
+
+      .history-table-container {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-md);
+        overflow-x: auto;
+      }
+
+      .history-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .history-table thead {
+        background: var(--glass);
+        border-bottom: 2px solid var(--glass-border);
+      }
+
+      .history-table th {
+        padding: var(--space-md);
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .history-table tbody tr {
+        border-bottom: 1px solid var(--glass-border);
+        transition: all var(--transition-base);
+      }
+
+      .history-table tbody tr:hover {
+        background: var(--glass);
+      }
+
+      .history-table td {
+        padding: var(--space-md);
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .status-badge.check-in {
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--success-light);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .status-badge.check-out {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+
+      .status-badge.inside {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: var(--space-2xl);
+        color: var(--text-muted);
+      }
+
+      .empty-icon {
+        font-size: 64px;
+        margin-bottom: var(--space-lg);
+        opacity: 0.5;
+      }
+
+      .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-sm);
+        margin-top: var(--space-lg);
+      }
+
+      .pagination button {
+        padding: 8px 16px;
+        border: 1px solid var(--glass-border);
+        background: var(--glass);
+        color: var(--text-primary);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all var(--transition-base);
+      }
+
+      .pagination button:hover:not(:disabled) {
+        background: var(--glass-hover);
+        border-color: var(--primary);
+      }
+
+      .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .pagination button.active {
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: white;
+        border-color: transparent;
+      }
+
+      .vehicle-plate-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        padding: 4px 10px;
+        background: rgba(59, 130, 246, 0.2);
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        color: var(--primary-light);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+
+      .duration-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        padding: 4px 10px;
+        background: rgba(139, 92, 246, 0.2);
+        border-radius: var(--radius-full);
+        font-weight: 600;
+        color: var(--secondary-light);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <div id="modernNav"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="header-title">
+          <span><span class="material-icons" style="vertical-align: middle;">history</span> Access History</span>
+        </h1>
+        <p class="header-subtitle">Complete log of all RFID check-in and check-out events</p>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+      <!-- Statistics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon"><span class="material-icons">input</span></div>
+            <div class="stat-info">
+              <div class="stat-label">Total Check-Ins</div>
+              <div class="stat-value" id="totalCheckIns">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon"><span class="material-icons">output</span></div>
+            <div class="stat-info">
+              <div class="stat-label">Total Check-Outs</div>
+              <div class="stat-value" id="totalCheckOuts">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon"><span class="material-icons">directions_car</span></div>
+            <div class="stat-info">
+              <div class="stat-label">Currently Inside</div>
+              <div class="stat-value" id="currentlyInside">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon"><span class="material-icons">schedule</span></div>
+            <div class="stat-info">
+              <div class="stat-label">Avg. Duration</div>
+              <div class="stat-value" id="avgDuration">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-card">
+        <div class="filters-title">
+          <span class="material-icons">search</span>
+          <span>Filter History</span>
+        </div>
+        <div class="filters-grid">
+          <div class="form-group">
+            <label class="form-label" for="filterUID">Card UID</label>
+            <input type="text" id="filterUID" class="form-input" placeholder="Search by UID..." />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="filterName">Name</label>
+            <input type="text" id="filterName" class="form-input" placeholder="Search by name..." />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="filterPlate">Vehicle Plate</label>
+            <input type="text" id="filterPlate" class="form-input" placeholder="Search by plate..." />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="filterStatus">Status</label>
+            <select id="filterStatus" class="form-select">
+              <option value="">All</option>
+              <option value="inside">Currently Inside</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top: var(--space-lg); display: flex; gap: var(--space-md);">
+          <button class="btn btn-primary" id="applyFilter">
+            <span class="material-icons">search</span>
+            <span>Apply Filter</span>
+          </button>
+          <button class="btn btn-ghost" id="clearFilter">
+            <span class="material-icons">refresh</span>
+            <span>Clear</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- History Table -->
+      <div class="history-table-container">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Card UID</th>
+              <th>Name</th>
+              <th>Vehicle Plate</th>
+              <th>Department</th>
+              <th>Check-In</th>
+              <th>Check-Out</th>
+              <th>Duration</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <!-- Data will be inserted here -->
+          </tbody>
+        </table>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <div class="empty-icon">📭</div>
+          <h3>No History Found</h3>
+          <p>No access records match your criteria</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination">
+          <!-- Pagination buttons will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="backend.js"></script>
+    <script src="navigation.js"></script>
+    <script>
+      // Auth guard
+      (function(){
+        try {
+          const user = auth.getCurrentUser();
+          if (!user) {
+            localStorage.setItem('rfid_return_to', location.pathname);
+            location.href = 'login.html';
+          }
+        } catch(e) {
+          location.href = 'login.html';
+        }
+      })();
+
+      let allRecords = [];
+      let filteredRecords = [];
+      let currentPage = 1;
+      const recordsPerPage = 20;
+
+      // Load history data
+      async function loadHistory() {
+        try {
+          // Load registry data
+          const regRes = await fetch('/api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'get_registry' })
+          });
+          const regData = await regRes.json();
+
+          // Load customers data
+          const custRes = await fetch('/api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'get_customers' })
+          });
+          const custData = await custRes.json();
+
+          if (regData.ok && custData.ok) {
+            const registry = regData.registry || {};
+            const customers = custData.customers || {};
+
+            // Combine data
+            allRecords = Object.entries(registry).map(([uid, record]) => {
+              const customer = customers[uid] || {};
+              return {
+                uid,
+                name: customer.name || 'Unknown',
+                vehicle_plate: customer.vehicle_plate || 'N/A',
+                department: customer.department || 'N/A',
+                check_in: record.in || null,
+                check_out: record.out || null,
+                status: record.out ? 'completed' : 'inside'
+              };
+            });
+
+            // Sort by check-in time (newest first)
+            allRecords.sort((a, b) => new Date(b.check_in) - new Date(a.check_in));
+
+            filteredRecords = [...allRecords];
+            updateStatistics();
+            renderTable();
+          }
+        } catch (e) {
+          console.error('Failed to load history:', e);
+        }
+      }
+
+      // Update statistics
+      function updateStatistics() {
+        const totalCheckIns = allRecords.length;
+        const totalCheckOuts = allRecords.filter(r => r.status === 'completed').length;
+        const currentlyInside = allRecords.filter(r => r.status === 'inside').length;
+
+        // Calculate average duration
+        const completedRecords = allRecords.filter(r => r.check_out);
+        let avgDuration = '—';
+        if (completedRecords.length > 0) {
+          const totalMinutes = completedRecords.reduce((sum, record) => {
+            const duration = new Date(record.check_out) - new Date(record.check_in);
+            return sum + (duration / 1000 / 60); // Convert to minutes
+          }, 0);
+          const avg = Math.round(totalMinutes / completedRecords.length);
+          avgDuration = formatDuration(avg);
+        }
+
+        document.getElementById('totalCheckIns').textContent = totalCheckIns;
+        document.getElementById('totalCheckOuts').textContent = totalCheckOuts;
+        document.getElementById('currentlyInside').textContent = currentlyInside;
+        document.getElementById('avgDuration').textContent = avgDuration;
+      }
+
+      // Format duration
+      function formatDuration(minutes) {
+        if (minutes < 60) return `${minutes}m`;
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours}h ${mins}m`;
+      }
+
+      // Calculate duration between two timestamps
+      function calculateDuration(checkIn, checkOut) {
+        if (!checkOut) return '—';
+        const duration = new Date(checkOut) - new Date(checkIn);
+        const minutes = Math.floor(duration / 1000 / 60);
+        return formatDuration(minutes);
+      }
+
+      // Format timestamp
+      function formatTimestamp(timestamp) {
+        if (!timestamp) return '—';
+        try {
+          const date = new Date(timestamp);
+          return date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        } catch (e) {
+          return timestamp;
+        }
+      }
+
+      // Render table
+      function renderTable() {
+        const tbody = document.getElementById('historyTableBody');
+        const emptyState = document.getElementById('emptyState');
+
+        if (filteredRecords.length === 0) {
+          tbody.innerHTML = '';
+          emptyState.style.display = 'block';
+          document.getElementById('pagination').innerHTML = '';
+          return;
+        }
+
+        emptyState.style.display = 'none';
+
+        // Pagination
+        const startIndex = (currentPage - 1) * recordsPerPage;
+        const endIndex = startIndex + recordsPerPage;
+        const pageRecords = filteredRecords.slice(startIndex, endIndex);
+
+        tbody.innerHTML = pageRecords.map(record => `
+          <tr>
+            <td><code style="font-family: var(--font-mono); background: var(--glass); padding: 4px 8px; border-radius: 4px;">${escapeHtml(record.uid)}</code></td>
+            <td><strong>${escapeHtml(record.name)}</strong></td>
+            <td><span class="vehicle-plate-badge"><span>🚗</span><span>${escapeHtml(record.vehicle_plate)}</span></span></td>
+            <td>${escapeHtml(record.department)}</td>
+            <td>${formatTimestamp(record.check_in)}</td>
+            <td>${formatTimestamp(record.check_out)}</td>
+            <td><span class="duration-badge"><span>⏱️</span><span>${calculateDuration(record.check_in, record.check_out)}</span></span></td>
+            <td>
+              <span class="status-badge ${record.status}">
+                ${record.status === 'inside' ? '🟢 Inside' : '✅ Completed'}
+              </span>
+            </td>
+          </tr>
+        `).join('');
+
+        renderPagination();
+      }
+
+      // Render pagination
+      function renderPagination() {
+        const pagination = document.getElementById('pagination');
+        const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+
+        if (totalPages <= 1) {
+          pagination.innerHTML = '';
+          return;
+        }
+
+        let html = `
+          <button ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">‹ Previous</button>
+        `;
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            html += `<button class="${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+          } else if (i === currentPage - 3 || i === currentPage + 3) {
+            html += `<span>...</span>`;
+          }
+        }
+
+        html += `
+          <button ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">Next ›</button>
+        `;
+
+        pagination.innerHTML = html;
+      }
+
+      // Change page
+      window.changePage = function(page) {
+        currentPage = page;
+        renderTable();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      // Apply filter
+      document.getElementById('applyFilter').addEventListener('click', () => {
+        const uidFilter = document.getElementById('filterUID').value.toLowerCase();
+        const nameFilter = document.getElementById('filterName').value.toLowerCase();
+        const plateFilter = document.getElementById('filterPlate').value.toLowerCase();
+        const statusFilter = document.getElementById('filterStatus').value;
+
+        filteredRecords = allRecords.filter(record => {
+          const matchUID = !uidFilter || record.uid.toLowerCase().includes(uidFilter);
+          const matchName = !nameFilter || record.name.toLowerCase().includes(nameFilter);
+          const matchPlate = !plateFilter || record.vehicle_plate.toLowerCase().includes(plateFilter);
+          const matchStatus = !statusFilter || record.status === statusFilter;
+
+          return matchUID && matchName && matchPlate && matchStatus;
+        });
+
+        currentPage = 1;
+        renderTable();
+      });
+
+      // Clear filter
+      document.getElementById('clearFilter').addEventListener('click', () => {
+        document.getElementById('filterUID').value = '';
+        document.getElementById('filterName').value = '';
+        document.getElementById('filterPlate').value = '';
+        document.getElementById('filterStatus').value = '';
+
+        filteredRecords = [...allRecords];
+        currentPage = 1;
+        renderTable();
+      });
+
+      // Escape HTML
+      function escapeHtml(text) {
+        if (!text) return 'N/A';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Initial load
+      loadHistory();
+
+      // Auto-refresh every 30 seconds
+      setInterval(loadHistory, 30000);
+    </script>
+  </body>
+</html>

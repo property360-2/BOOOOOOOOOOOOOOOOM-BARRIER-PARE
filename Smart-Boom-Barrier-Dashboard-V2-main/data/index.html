@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard - ESP32 RFID Access System</title>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="modern-theme.css" />
+    <style>
+      body {
+        min-height: 100vh;
+      }
+
+      .hero-section {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1));
+        border-bottom: 1px solid var(--glass-border);
+        padding: var(--space-2xl) 0;
+        margin-bottom: var(--space-xl);
+      }
+
+      .hero-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 var(--space-xl);
+        text-align: center;
+      }
+
+      .hero-title {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: var(--space-md);
+        background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hero-subtitle {
+        font-size: 18px;
+        color: var(--text-muted);
+        margin-bottom: var(--space-xl);
+      }
+
+      .hero-stats {
+        display: flex;
+        justify-content: center;
+        gap: var(--space-2xl);
+        flex-wrap: wrap;
+        margin-top: var(--space-xl);
+      }
+
+      .hero-stat {
+        text-align: center;
+      }
+
+      .hero-stat-value {
+        font-size: 42px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--space-sm);
+      }
+
+      .hero-stat-label {
+        font-size: 14px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--space-lg);
+        margin-bottom: var(--space-xl);
+      }
+
+      .action-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-base);
+        text-decoration: none;
+        display: block;
+        cursor: pointer;
+      }
+
+      .action-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-xl), var(--shadow-glow);
+        border-color: var(--primary);
+      }
+
+      .action-icon {
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: var(--radius-lg);
+        font-size: 32px;
+        margin-bottom: var(--space-lg);
+        box-shadow: var(--shadow-md);
+      }
+
+      .action-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--space-sm);
+      }
+
+      .action-description {
+        font-size: 14px;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-lg);
+        margin-bottom: var(--space-xl);
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-base);
+      }
+
+      .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary);
+      }
+
+      .stat-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        margin-bottom: var(--space-md);
+      }
+
+      .stat-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: var(--radius-md);
+        font-size: 24px;
+        box-shadow: var(--shadow-md);
+      }
+
+      .stat-info {
+        flex: 1;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+
+      .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-top: 4px;
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: var(--space-xl);
+      }
+
+      .content-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+        box-shadow: var(--shadow-md);
+      }
+
+      .content-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: var(--space-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding-bottom: var(--space-md);
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      .activity-item {
+        padding: var(--space-md);
+        border-bottom: 1px solid var(--glass-border);
+        transition: all var(--transition-base);
+      }
+
+      .activity-item:last-child {
+        border-bottom: none;
+      }
+
+      .activity-item:hover {
+        background: var(--glass);
+        margin: 0 calc(var(--space-md) * -1);
+        padding: var(--space-md) var(--space-md);
+        border-radius: var(--radius-md);
+      }
+
+      .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: var(--space-sm);
+      }
+
+      .activity-name {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .activity-time {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .activity-details {
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: var(--space-sm);
+      }
+
+      .status-indicator.online {
+        background: var(--success);
+        box-shadow: 0 0 8px var(--success);
+      }
+
+      .status-indicator.offline {
+        background: var(--danger);
+      }
+
+      .system-status {
+        display: flex;
+        align-items: center;
+        padding: var(--space-md);
+        background: var(--glass);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-md);
+      }
+
+      .system-status-label {
+        flex: 1;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+
+      @media (max-width: 968px) {
+        .hero-title {
+          font-size: 32px;
+        }
+
+        .content-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-stats {
+          gap: var(--space-lg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <div id="modernNav"></div>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+      <div class="hero-content">
+        <h1 class="hero-title">RFID Access Control System</h1>
+        <p class="hero-subtitle">Monitor and manage vehicle access in real-time</p>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-value" id="heroVehiclesInside">0</div>
+            <div class="hero-stat-label">Vehicles Inside</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value" id="heroTotalCustomers">0</div>
+            <div class="hero-stat-label">Registered Customers</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value" id="heroTodayActivity">0</div>
+            <div class="hero-stat-label">Today's Activity</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <a href="register_rfid.html" class="action-card">
+          <div class="action-icon"><span class="material-icons" style="font-size: 32px;">add_circle</span></div>
+          <div class="action-title">Register Card</div>
+          <div class="action-description">Add new RFID card and customer information to the system</div>
+        </a>
+
+        <a href="vehicles_inside.html" class="action-card">
+          <div class="action-icon"><span class="material-icons" style="font-size: 32px;">directions_car</span></div>
+          <div class="action-title">Vehicles Inside</div>
+          <div class="action-description">View all vehicles currently inside the premises in real-time</div>
+        </a>
+
+        <a href="access_history.html" class="action-card">
+          <div class="action-icon"><span class="material-icons" style="font-size: 32px;">history</span></div>
+          <div class="action-title">Access History</div>
+          <div class="action-description">View complete log of all check-in and check-out events</div>
+        </a>
+
+        <a href="admin.html" class="action-card">
+          <div class="action-icon"><span class="material-icons" style="font-size: 32px;">settings</span></div>
+          <div class="action-title">Admin Panel</div>
+          <div class="action-description">Manage system settings and user accounts</div>
+        </a>
+      </div>
+
+      <!-- Statistics -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon"><span class="material-icons" style="font-size: 24px;">input</span></div>
+            <div class="stat-info">
+              <div class="stat-label">Total Check-Ins</div>
+              <div class="stat-value" id="totalCheckIns">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon"><span class="material-icons" style="font-size: 24px;">output</span></div>
+            <div class="stat-info">
+              <div class="stat-label">Total Check-Outs</div>
+              <div class="stat-value" id="totalCheckOuts">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon"><span class="material-icons" style="font-size: 24px;">schedule</span></div>
+            <div class="stat-info">
+              <div class="stat-label">Avg Duration</div>
+              <div class="stat-value" id="avgDuration">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon"><span class="material-icons" style="font-size: 24px;">people</span></div>
+            <div class="stat-info">
+              <div class="stat-label">Registered</div>
+              <div class="stat-value" id="totalRegistered">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Grid -->
+      <div class="content-grid">
+        <!-- Recent Activity -->
+        <div class="content-card">
+          <h2 class="content-title">
+            <span class="material-icons">schedule</span>
+            <span>Recent Activity</span>
+          </h2>
+          <div id="recentActivity">
+            <!-- Activity items will be inserted here -->
+          </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="content-card">
+          <h2 class="content-title">
+            <span class="material-icons">dashboard</span>
+            <span>System Status</span>
+          </h2>
+
+          <div class="system-status">
+            <span class="status-indicator online"></span>
+            <span class="system-status-label">Web Server</span>
+            <span style="color: var(--success); font-weight: 600;">Online</span>
+          </div>
+
+          <div class="system-status">
+            <span class="status-indicator" id="esp32Status"></span>
+            <span class="system-status-label">ESP32 Device</span>
+            <span id="esp32StatusText" style="font-weight: 600;">Checking...</span>
+          </div>
+
+          <div class="system-status">
+            <span class="status-indicator online"></span>
+            <span class="system-status-label">Database</span>
+            <span style="color: var(--success); font-weight: 600;">Operational</span>
+          </div>
+
+          <div style="margin-top: var(--space-xl); padding-top: var(--space-lg); border-top: 1px solid var(--glass-border);">
+            <h3 style="font-size: 16px; margin-bottom: var(--space-md); font-weight: 700;">Quick Stats</h3>
+            <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+              <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                <span style="color: var(--text-muted);">Uptime</span>
+                <span style="color: var(--text-primary); font-weight: 600;">99.9%</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                <span style="color: var(--text-muted);">Last Backup</span>
+                <span style="color: var(--text-primary); font-weight: 600;">2 hours ago</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                <span style="color: var(--text-muted);">Storage Used</span>
+                <span style="color: var(--text-primary); font-weight: 600;">2.3 MB</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="backend.js"></script>
+    <script src="navigation.js"></script>
+    <script>
+      // Auth guard
+      (function(){
+        try {
+          const user = auth.getCurrentUser();
+          if (!user) {
+            localStorage.setItem('rfid_return_to', location.pathname);
+            location.href = 'login.html';
+          }
+        } catch(e) {
+          location.href = 'login.html';
+        }
+      })();
+
+      // Load dashboard data
+      async function loadDashboard() {
+        try {
+          // Load vehicles inside
+          const vehiclesRes = await fetch('/api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'get_vehicles_inside' })
+          });
+          const vehiclesData = await vehiclesRes.json();
+
+          // Load customers
+          const customersRes = await fetch('/api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'get_customers' })
+          });
+          const customersData = await customersRes.json();
+
+          // Load registry
+          const registryRes = await fetch('/api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'get_registry' })
+          });
+          const registryData = await registryRes.json();
+
+          if (vehiclesData.ok && customersData.ok && registryData.ok) {
+            updateDashboard(vehiclesData.vehicles || [], customersData.customers || {}, registryData.registry || {});
+          }
+        } catch (e) {
+          console.error('Failed to load dashboard:', e);
+        }
+      }
+
+      function updateDashboard(vehicles, customers, registry) {
+        // Hero stats
+        document.getElementById('heroVehiclesInside').textContent = vehicles.length;
+        document.getElementById('heroTotalCustomers').textContent = Object.keys(customers).length;
+
+        // Calculate today's activity
+        const today = new Date().toDateString();
+        const todayActivity = Object.values(registry).filter(r => {
+          const checkInDate = new Date(r.in).toDateString();
+          return checkInDate === today;
+        }).length;
+        document.getElementById('heroTodayActivity').textContent = todayActivity;
+
+        // Statistics
+        const allRecords = Object.values(registry);
+        const totalCheckIns = allRecords.length;
+        const totalCheckOuts = allRecords.filter(r => r.out).length;
+
+        document.getElementById('totalCheckIns').textContent = totalCheckIns;
+        document.getElementById('totalCheckOuts').textContent = totalCheckOuts;
+        document.getElementById('totalRegistered').textContent = Object.keys(customers).length;
+
+        // Calculate average duration
+        const completedRecords = allRecords.filter(r => r.out);
+        if (completedRecords.length > 0) {
+          const totalMinutes = completedRecords.reduce((sum, record) => {
+            const duration = new Date(record.out) - new Date(record.in);
+            return sum + (duration / 1000 / 60);
+          }, 0);
+          const avg = Math.round(totalMinutes / completedRecords.length);
+          document.getElementById('avgDuration').textContent = formatDuration(avg);
+        }
+
+        // Recent activity
+        renderRecentActivity(allRecords, customers);
+      }
+
+      function renderRecentActivity(records, customers) {
+        const container = document.getElementById('recentActivity');
+
+        // Get recent records (last 10)
+        const recentRecords = Object.entries(records)
+          .map(([uid, record]) => ({ uid, ...record, customer: customers[uid] || {} }))
+          .sort((a, b) => new Date(b.in) - new Date(a.in))
+          .slice(0, 10);
+
+        if (recentRecords.length === 0) {
+          container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: var(--space-lg);">No recent activity</p>';
+          return;
+        }
+
+        container.innerHTML = recentRecords.map(record => `
+          <div class="activity-item">
+            <div class="activity-header">
+              <span class="activity-name">${escapeHtml(record.customer.name || 'Unknown')}</span>
+              <span class="activity-time">${formatTimeAgo(record.in)}</span>
+            </div>
+            <div class="activity-details">
+              ${record.customer.vehicle_plate ? `<span class="material-icons" style="font-size: 14px; vertical-align: middle;">directions_car</span> ${escapeHtml(record.customer.vehicle_plate)} • ` : ''}
+              ${record.out ? '<span class="material-icons" style="font-size: 14px; vertical-align: middle; color: var(--success);">check_circle</span> Checked out' : '<span class="material-icons" style="font-size: 14px; vertical-align: middle; color: var(--success);">lens</span> Currently inside'}
+              ${record.out ? ` • Duration: ${calculateDuration(record.in, record.out)}` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function formatDuration(minutes) {
+        if (minutes < 60) return `${minutes}m`;
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours}h ${mins}m`;
+      }
+
+      function calculateDuration(checkIn, checkOut) {
+        const duration = new Date(checkOut) - new Date(checkIn);
+        const minutes = Math.floor(duration / 1000 / 60);
+        return formatDuration(minutes);
+      }
+
+      function formatTimeAgo(timestamp) {
+        const now = new Date();
+        const then = new Date(timestamp);
+        const diffMs = now - then;
+        const diffMins = Math.floor(diffMs / 1000 / 60);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours}h ago`;
+
+        const diffDays = Math.floor(diffHours / 24);
+        return `${diffDays}d ago`;
+      }
+
+      function escapeHtml(text) {
+        if (!text) return 'N/A';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Check ESP32 connection
+      function checkESP32Status() {
+        try {
+          const ws = new WebSocket('ws://192.168.4.1/ws');
+          ws.onopen = () => {
+            document.getElementById('esp32Status').className = 'status-indicator online';
+            document.getElementById('esp32StatusText').innerHTML = '<span style="color: var(--success);">Connected</span>';
+            ws.close();
+          };
+          ws.onerror = () => {
+            document.getElementById('esp32Status').className = 'status-indicator offline';
+            document.getElementById('esp32StatusText').innerHTML = '<span style="color: var(--danger);">Offline</span>';
+          };
+        } catch (e) {
+          document.getElementById('esp32Status').className = 'status-indicator offline';
+          document.getElementById('esp32StatusText').innerHTML = '<span style="color: var(--danger);">Offline</span>';
+        }
+      }
+
+      // Initial load
+      loadDashboard();
+      checkESP32Status();
+
+      // Auto-refresh every 30 seconds
+      setInterval(loadDashboard, 30000);
+      setInterval(checkESP32Status, 60000);
+    </script>
+  </body>
+</html>

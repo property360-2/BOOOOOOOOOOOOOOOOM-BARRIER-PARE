@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Panel - ESP32 RFID Access System</title>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="modern-theme.css" />
+    <style>
+      .page-header {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05));
+        border-bottom: 1px solid var(--glass-border);
+        padding: var(--space-xl) 0;
+        margin-bottom: var(--space-xl);
+      }
+
+      .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 var(--space-xl);
+      }
+
+      .header-title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: var(--space-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+      }
+
+      .header-subtitle {
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .admin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: var(--space-xl);
+        margin-bottom: var(--space-xl);
+      }
+
+      .admin-section {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+        box-shadow: var(--shadow-md);
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-lg);
+        padding-bottom: var(--space-md);
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+      }
+
+      .section-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 10px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: var(--radius-full);
+        font-size: 14px;
+        font-weight: 700;
+        color: white;
+      }
+
+      .add-tag-form {
+        display: flex;
+        gap: var(--space-md);
+        margin-bottom: var(--space-lg);
+      }
+
+      .add-tag-form .form-input {
+        flex: 1;
+      }
+
+      .tags-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+      }
+
+      .tag-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-md);
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: var(--radius-md);
+        transition: all var(--transition-base);
+      }
+
+      .tag-item:hover {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateX(4px);
+      }
+
+      .tag-uid {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        color: var(--primary-light);
+        font-size: 15px;
+      }
+
+      .user-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-md);
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: var(--radius-md);
+        transition: all var(--transition-base);
+      }
+
+      .user-item:hover {
+        background: rgba(139, 92, 246, 0.15);
+        border-color: rgba(139, 92, 246, 0.3);
+        transform: translateX(4px);
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+      }
+
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-full);
+        background: linear-gradient(135deg, var(--secondary), var(--accent));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: white;
+        font-size: 16px;
+      }
+
+      .user-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .user-name {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .user-role {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        background: rgba(139, 92, 246, 0.2);
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--secondary-light);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: var(--space-xl);
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .empty-icon {
+        font-size: 48px;
+        margin-bottom: var(--space-md);
+        opacity: 0.5;
+      }
+
+      .connection-status {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: 6px 12px;
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-full);
+        font-size: 12px;
+      }
+
+      .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+
+      .status-indicator.online {
+        background: var(--success);
+        box-shadow: 0 0 8px var(--success);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .status-indicator.offline {
+        background: var(--danger);
+      }
+
+      @media (max-width: 768px) {
+        .admin-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <div id="modernNav"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="header-title">
+          <span><span class="material-icons" style="vertical-align: middle;">settings</span> Admin Panel</span>
+          <span class="connection-status">
+            <span class="status-indicator" id="espStatus"></span>
+            <span id="espStatusText">Connecting...</span>
+          </span>
+        </h1>
+        <p class="header-subtitle">Manage allowed RFID tags and system users</p>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="admin-grid">
+        <!-- RFID Tags Section -->
+        <div class="admin-section">
+          <div class="section-header">
+            <div class="section-title">
+              <span><span class="material-icons" style="vertical-align: middle;">label</span> Allowed RFID Tags</span>
+              <span class="section-badge" id="tagCount">0</span>
+            </div>
+          </div>
+
+          <div class="add-tag-form">
+            <input
+              id="newTag"
+              class="form-input"
+              type="text"
+              placeholder="Enter Tag UID (e.g., TAG-123)"
+            />
+            <button id="addTag" class="btn btn-primary">
+              <span class="material-icons">add_circle</span>
+              <span>Add Tag</span>
+            </button>
+          </div>
+
+          <div id="tags" class="tags-list"></div>
+          <div id="tagsEmpty" class="empty-state" style="display:none">
+            <div class="empty-icon"><span class="material-icons" style="font-size: 48px;">label</span></div>
+            <p>No RFID tags configured yet. Add one above to get started.</p>
+          </div>
+        </div>
+
+        <!-- Users Section -->
+        <div class="admin-section">
+          <div class="section-header">
+            <div class="section-title">
+              <span><span class="material-icons" style="vertical-align: middle;">people</span> System Users</span>
+              <span class="section-badge" id="userCount">0</span>
+            </div>
+          </div>
+
+          <div id="users" class="tags-list"></div>
+          <div id="usersEmpty" class="empty-state" style="display:none">
+            <div class="empty-icon"><span class="material-icons" style="font-size: 48px;">people</span></div>
+            <p>No users found in the system.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="backend.js"></script>
+    <script src="navigation.js"></script>
+    <script>
+      // Auth guard - admin only
+      (function(){
+        try {
+          const user = auth.getCurrentUser();
+          if (!user || user.role !== 'admin') {
+            alert('Admin access required');
+            location.href = 'login.html';
+          }
+        } catch(e) {
+          location.href = 'login.html';
+        }
+      })();
+
+      const STORAGE = 'rfid_allowed_v1';
+
+      // Load tags from backend or localStorage
+      async function load(){
+        try {
+          const r = await backend.getTags();
+          if (r && r.ok) return r.tags || [];
+        } catch(e) {
+          console.warn('Failed to load from backend:', e);
+        }
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE) || '[]');
+        } catch(e) {
+          return [];
+        }
+      }
+
+      function save(a){
+        localStorage.setItem(STORAGE, JSON.stringify(a));
+        window.dispatchEvent(new Event('storage'));
+      }
+
+      // WebSocket to ESP32 device
+      let espWs = null;
+      function initESPWebSocket(){
+        const urls = ['ws://192.168.4.1/ws', 'ws://' + location.hostname + '/ws'];
+        let idx = 0;
+
+        function updateStatus(online) {
+          const indicator = document.getElementById('espStatus');
+          const text = document.getElementById('espStatusText');
+          if (online) {
+            indicator.className = 'status-indicator online';
+            text.innerHTML = '<span style="color: var(--success);">ESP32 Connected</span>';
+          } else {
+            indicator.className = 'status-indicator offline';
+            text.innerHTML = '<span style="color: var(--danger);">ESP32 Offline</span>';
+          }
+        }
+
+        function tryConnect(){
+          const url = urls[idx % urls.length];
+          try {
+            espWs = new WebSocket(url);
+            espWs.onopen = () => {
+              console.log('ESP WebSocket connected', url);
+              updateStatus(true);
+            };
+            espWs.onclose = () => {
+              console.log('ESP WebSocket closed, reconnecting');
+              updateStatus(false);
+              espWs = null;
+              setTimeout(tryConnect, 3000);
+            };
+            espWs.onerror = (e) => {
+              console.log('ESP WebSocket error', e);
+              updateStatus(false);
+              espWs = null;
+              idx++;
+              setTimeout(tryConnect, 1000);
+            };
+            espWs.onmessage = (m) => {
+              console.log('From ESP:', m.data);
+            };
+          } catch(e) {
+            updateStatus(false);
+            idx++;
+            setTimeout(tryConnect, 1000);
+          }
+        }
+        tryConnect();
+      }
+
+      function sendToESP(msg){
+        try {
+          if (espWs && espWs.readyState === WebSocket.OPEN) {
+            espWs.send(msg);
+            console.log('Sent to ESP:', msg);
+          }
+        } catch(e) {
+          console.warn('ESP WS send failed', e);
+        }
+      }
+
+      initESPWebSocket();
+
+      // Render tags
+      const tagsEl = document.getElementById('tags');
+      const tagsEmpty = document.getElementById('tagsEmpty');
+      const tagCount = document.getElementById('tagCount');
+
+      async function renderTags(){
+        const a = await load();
+        tagCount.textContent = a.length;
+
+        if (a.length === 0) {
+          tagsEl.style.display = 'none';
+          tagsEmpty.style.display = 'block';
+          return;
+        }
+
+        tagsEl.style.display = 'flex';
+        tagsEmpty.style.display = 'none';
+        tagsEl.innerHTML = '';
+
+        for (const t of a) {
+          const d = document.createElement('div');
+          d.className = 'tag-item';
+
+          const uid = document.createElement('span');
+          uid.className = 'tag-uid';
+          uid.textContent = t;
+
+          const rem = document.createElement('button');
+          rem.className = 'btn btn-danger btn-sm';
+          rem.innerHTML = '<span class="material-icons">delete</span><span>Remove</span>';
+          rem.addEventListener('click', async () => {
+            if (!confirm(`Remove tag ${t}?`)) return;
+
+            try {
+              const res = await backend.removeTag(t);
+              if (res && res.ok) {
+                save(res.tags || []);
+                renderTags();
+                sendToESP('remove:' + t);
+                return;
+              }
+            } catch(e) {
+              console.warn('Backend remove failed:', e);
+            }
+
+            const arr = (await load()).filter(x => x !== t);
+            save(arr);
+            renderTags();
+            sendToESP('remove:' + t);
+          });
+
+          d.appendChild(uid);
+          d.appendChild(rem);
+          tagsEl.appendChild(d);
+        }
+      }
+
+      // Add tag
+      document.getElementById('addTag').addEventListener('click', async () => {
+        const v = document.getElementById('newTag').value.trim();
+        if (!v) return;
+
+        try {
+          const res = await backend.addTag(v);
+          if (res && res.ok) {
+            save(res.tags || []);
+            renderTags();
+            sendToESP('register:' + v);
+            document.getElementById('newTag').value = '';
+            return;
+          }
+        } catch(e) {
+          console.warn('Backend add failed:', e);
+        }
+
+        const arr = await load();
+        if (!arr.includes(v)) arr.push(v);
+        save(arr);
+        renderTags();
+        sendToESP('register:' + v);
+        document.getElementById('newTag').value = '';
+      });
+
+      // Allow Enter key to add tag
+      document.getElementById('newTag').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('addTag').click();
+        }
+      });
+
+      renderTags();
+
+      // Users management
+      const usersEl = document.getElementById('users');
+      const usersEmpty = document.getElementById('usersEmpty');
+      const userCount = document.getElementById('userCount');
+
+      function renderUsers(){
+        const users = auth.loadUsers();
+        userCount.textContent = users.length;
+
+        if (users.length === 0) {
+          usersEl.style.display = 'none';
+          usersEmpty.style.display = 'block';
+          return;
+        }
+
+        usersEl.style.display = 'flex';
+        usersEmpty.style.display = 'none';
+        usersEl.innerHTML = '';
+
+        for (const u of users) {
+          const d = document.createElement('div');
+          d.className = 'user-item';
+
+          const left = document.createElement('div');
+          left.className = 'user-info';
+
+          const avatar = document.createElement('div');
+          avatar.className = 'user-avatar';
+          avatar.textContent = u.username.charAt(0).toUpperCase();
+
+          const details = document.createElement('div');
+          details.className = 'user-details';
+
+          const name = document.createElement('div');
+          name.className = 'user-name';
+          name.textContent = u.username;
+
+          const role = document.createElement('div');
+          role.className = 'user-role';
+          role.textContent = u.role;
+
+          details.appendChild(name);
+          details.appendChild(role);
+          left.appendChild(avatar);
+          left.appendChild(details);
+
+          const del = document.createElement('button');
+          del.className = 'btn btn-danger btn-sm';
+          del.innerHTML = '<span class="material-icons">delete</span><span>Delete</span>';
+          del.addEventListener('click', async () => {
+            if (!confirm(`Delete user ${u.username}? This cannot be undone.`)) return;
+
+            const res = await auth.deleteUser(u.username);
+            if (!res.ok) {
+              if (res.err === 'self-delete') {
+                alert('Cannot delete the currently logged-in user.');
+              } else if (res.err === 'last-admin') {
+                alert('Cannot delete the last admin account. Create another admin first.');
+              } else {
+                alert('Failed to delete user: ' + (res.err || 'unknown'));
+              }
+              return;
+            }
+            renderUsers();
+            alert('User deleted successfully');
+          });
+
+          d.appendChild(left);
+          d.appendChild(del);
+          usersEl.appendChild(d);
+        }
+      }
+
+      renderUsers();
+    </script>
+  </body>
+</html>
